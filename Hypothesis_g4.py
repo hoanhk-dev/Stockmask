@@ -1,3 +1,8 @@
+from itertools import product
+import yfinance as yf
+import pandas as pd
+import numpy as np
+
 STOCK_ID = [
     "50200",
     "80580",
@@ -35,14 +40,7 @@ def stock_id_preprocessing(stock_ids):
     return result
 
 STOCK_ID = stock_id_preprocessing(STOCK_ID)
-print(STOCK_ID)
 
-
-
-from itertools import product
-import yfinance as yf
-import pandas as pd
-import numpy as np
 
 class FuzzyBase:
     """Shared fuzzy helper methods used by multiple fuzzy-system classes."""
@@ -320,16 +318,44 @@ RULE_TABLE = {
     ("HIGH", "IMPROVING"): ("STRONG", 90),
 }
 
+# ===================== ROA =====================
+# LOW    : ROA < 5%
+# MEDIUM : 5% ≤ ROA < 10%
+# HIGH   : ROA ≥ 10%
+
 MAP_ROA = {
-    "LOW": (-np.inf, 0.06),
-    "MEDIUM": (0.04, 0.08),
-    "HIGH": (0.08, np.inf)
+    "LOW": (
+        -np.inf,
+        np.nextafter(0.05, np.inf) 
+    ),
+    "MEDIUM": (
+        0.03,
+        np.nextafter(0.10, np.inf)   
+    ),
+    "HIGH": (
+        0.08,
+        np.inf
+    )
 }
 
+# ===================== ROA TREND (SLOPE) =====================
+# DECLINING : slope < -0.05
+# STABLE    : -0.05 ≤ slope ≤ +0.05
+# IMPROVING : slope > +0.05
+
 MAP_TREND = {
-    "DECLINING": (-np.inf, 0.0),
-    "STABLE": (-0.03, 0.06),
-    "IMPROVING": (0.03, np.inf)
+    "DECLINING": (
+        -np.inf,
+        np.nextafter(-0.05, np.inf)
+    ),
+    "STABLE": (
+        -0.07,
+        np.nextafter(0.05, np.inf)
+    ),
+    "IMPROVING": (
+        0.03,
+        np.inf
+    )
 }
 
 OUTPUT_LEVELS = {
@@ -373,16 +399,44 @@ RULE_TABLE = {
     ("LOW", "LOW"): ("DETERIORATING", 25),
 }
 
+# ===================== CURRENT RATIO =====================
+# LOW    : x < 1.0
+# MEDIUM : 0.8 ≤ x < 1.5
+# HIGH   : x ≥ 1.3
+
 MAP_CURRENT_RATIO = {
-    "LOW":    (-np.inf, 1.0),   
-    "MEDIUM": (0.8, 1.5),     
-    "HIGH":   (1.3, np.inf)     
+    "LOW": (
+        -np.inf,
+        np.nextafter(1.0, np.inf) 
+    ),
+    "MEDIUM": (
+        0.8,
+        np.nextafter(1.5, np.inf)
+    ),
+    "HIGH": (
+        1.3,
+        np.inf
+    )
 }
 
+# ===================== QUICK RATIO =====================
+# LOW    : x < 1.0
+# MEDIUM : 0.8 ≤ x < 1.5
+# HIGH   : x ≥ 1.3
+
 MAP_QUICK_RATIO = {
-    "LOW":    (-np.inf, 1.0),   
-    "MEDIUM": (0.8, 1.5),     
-    "HIGH":   (1.3, np.inf)     
+    "LOW": (
+        -np.inf,
+        np.nextafter(1.0, np.inf)
+    ),
+    "MEDIUM": (
+        0.8,
+        np.nextafter(1.5, np.inf)
+    ),
+    "HIGH": (
+        1.3,
+        np.inf
+    )
 }
 
 OUTPUT_LEVELS = {
