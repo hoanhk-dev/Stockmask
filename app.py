@@ -696,8 +696,10 @@ if app_mode == "ROA Bottoming Trend Fuzzy":
             level_label = fuzzy_system.map_fuzzy_output_centroid(final_score)
             
             level_data = []
+            distances = []
             for label, target_score in output_levels.items():
                 distance = abs(final_score - target_score)
+                distances.append(distance)
                 is_selected = "✅" if label == level_label[0] else ""
                 level_data.append({
                     "": is_selected,
@@ -706,7 +708,24 @@ if app_mode == "ROA Bottoming Trend Fuzzy":
                     "Distance": f"{distance:.2f}"
                 })
             
-            st.dataframe(pd.DataFrame(level_data), use_container_width=True, hide_index=True)
+            # Find minimum distance for highlighting
+            min_distance = min(distances)
+            
+            # Create dataframe with styling
+            df_result = pd.DataFrame(level_data)
+            
+            # Apply highlighting to minimum distance row
+            def highlight_min_distance(row):
+                try:
+                    distance_val = float(row['Distance'])
+                    if abs(distance_val - min_distance) < 0.001:  # Account for floating point
+                        return ['background-color: #2ca02c' if col == 'Distance' else 'background-color: rgba(44, 160, 44, 0.3)' for col in df_result.columns]
+                except:
+                    pass
+                return ['' for col in df_result.columns]
+            
+            styled_df = df_result.style.apply(highlight_min_distance, axis=1)
+            st.dataframe(styled_df, use_container_width=True, hide_index=True)
             
             st.markdown("---")
             col1, col2, col3, col4 = st.columns(4)
@@ -719,7 +738,7 @@ if app_mode == "ROA Bottoming Trend Fuzzy":
             with col4:
                 st.metric("Target", level_label[1])
             
-            st.success("✅ Analysis Complete!")
+            st.markdown(render_success_box("Analysis Complete!"), unsafe_allow_html=True)
             
             tracker.add_step(6, "Final Result", "Assessment completed",
                            {"Level": level_label[0], "Score": f"{final_score:.2f}"})
@@ -867,10 +886,12 @@ else:  # Asset Liquidity Fuzzy
             
             st.success(f"✅ Retrieved balance sheet data for {stock_id}")
             
-            col1, col2 = st.columns(2)
+            col1, col2, col3 = st.columns(3)
             with col1:
-                st.metric("Current Ratio", f"{current_ratio:.4f}")
+                st.metric("Stock ID", stock_id)
             with col2:
+                st.metric("Current Ratio", f"{current_ratio:.4f}")
+            with col3:
                 st.metric("Quick Ratio", f"{quick_ratio:.4f}")
             
             tracker.add_step(2, "Calculate & Fetch Data", f"Retrieved data for {stock_id}",
@@ -945,8 +966,10 @@ else:  # Asset Liquidity Fuzzy
             level_label = fuzzy_system.map_fuzzy_output_centroid(final_score)
             
             level_data = []
+            distances = []
             for label, target_score in output_levels.items():
                 distance = abs(final_score - target_score)
+                distances.append(distance)
                 is_selected = "✅" if label == level_label[0] else ""
                 level_data.append({
                     "": is_selected,
@@ -955,7 +978,24 @@ else:  # Asset Liquidity Fuzzy
                     "Distance": f"{distance:.2f}"
                 })
             
-            st.dataframe(pd.DataFrame(level_data), use_container_width=True, hide_index=True)
+            # Find minimum distance for highlighting
+            min_distance = min(distances)
+            
+            # Create dataframe with styling
+            df_result = pd.DataFrame(level_data)
+            
+            # Apply highlighting to minimum distance row
+            def highlight_min_distance(row):
+                try:
+                    distance_val = float(row['Distance'])
+                    if abs(distance_val - min_distance) < 0.001:  # Account for floating point
+                        return ['background-color: #2ca02c' if col == 'Distance' else 'background-color: rgba(44, 160, 44, 0.3)' for col in df_result.columns]
+                except:
+                    pass
+                return ['' for col in df_result.columns]
+            
+            styled_df = df_result.style.apply(highlight_min_distance, axis=1)
+            st.dataframe(styled_df, use_container_width=True, hide_index=True)
             
             st.markdown("---")
             col1, col2, col3, col4 = st.columns(4)

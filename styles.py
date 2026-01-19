@@ -130,23 +130,6 @@ def get_custom_css():
         letter-spacing: 0.5px;
     }
     
-    /* Selectbox Input */
-    .stSelectbox > div > div > div:not(:first-child),
-    /* Textbox Input */
-    .stTextInput > div > div > input,
-    /* Textarea */
-    .stTextArea textarea,
-    /* Number Input */
-    .stNumberInput > div > div > input {
-        background-color: #1a1f2e !important;
-        color: #ffffff !important;
-        border: 2px solid #1f77b4 !important;
-        border-radius: 8px;
-        padding: 12px;
-        font-size: 14px;
-        transition: all 0.3s ease;
-    }
-    
     /* Selectbox dropdown button specifically */
     .stSelectbox > div > div:last-child {
         background-color: #1a1f2e !important;
