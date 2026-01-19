@@ -5,6 +5,10 @@ import yfinance as yf
 from itertools import product
 import json
 from datetime import datetime
+from styles import apply_styles, render_main_header, render_section_header, render_success_box, render_error_box
+
+# Apply custom styling immediately
+apply_styles(st)
 
 # Initialize session state for custom inputs
 if "roa_custom_stock" not in st.session_state:
@@ -33,8 +37,15 @@ class StepTracker:
     
     def display_header(self):
         """Display pipeline header"""
-        st.markdown(f"## 🔄 {self.title}")
-        st.markdown("---")
+        st.markdown(f"""
+        <div style='background: linear-gradient(135deg, #1f77b4 0%, #ff7f0e 100%); 
+                    padding: 20px; border-radius: 10px; margin-bottom: 20px;'>
+            <h2 style='color: white; margin: 0; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);'>
+                🔄 {self.title}
+            </h2>
+        </div>
+        """, unsafe_allow_html=True)
+        st.markdown('<div style="border-top: 2px solid; border-image: linear-gradient(90deg, #1f77b4, #ff7f0e, #1f77b4) 1;"></div>', unsafe_allow_html=True)
     
     def display_step(self, step):
         """Display a single step with rich formatting"""
@@ -46,15 +57,20 @@ class StepTracker:
         # Step header with progress indicator
         col1, col2 = st.columns([0.8, 0.2])
         with col1:
-            st.markdown(f"### ✅ Step {step_num}: {title}")
+            st.markdown(f"""
+            <div class='step-container fade-in'>
+                <span class='step-number'>{step_num}</span>
+                <span style='font-size: 18px; font-weight: 700; color: #ff7f0e;'>{title}</span>
+            </div>
+            """, unsafe_allow_html=True)
             if description:
-                st.markdown(f"*{description}*", help=None)
+                st.markdown(f"<p style='color: #cccccc; margin-top: -10px;'><em>{description}</em></p>", unsafe_allow_html=True)
         with col2:
-            st.markdown(f"<div style='text-align:right'><code>{step['timestamp']}</code></div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='text-align:right; color: #1f77b4; font-size: 12px;'><code>⏰ {step['timestamp']}</code></div>", unsafe_allow_html=True)
         
         # Display details if available
         if details:
-            st.markdown("**Details:**")
+            st.markdown("<p style='color: #ff7f0e; font-weight: 600; margin-top: 10px;'>📊 Details:</p>", unsafe_allow_html=True)
             detail_cols = st.columns(len(details))
             for idx, (key, value) in enumerate(details.items()):
                 with detail_cols[idx]:
@@ -66,10 +82,11 @@ class StepTracker:
         """Display all steps with progress bar"""
         self.display_header()
         
-        # Progress bar
+        # Progress bar with styling
         progress_col, text_col = st.columns([0.8, 0.2])
         with progress_col:
-            st.progress(1.0, "100% Complete")
+            st.markdown("<p style='color: #ff7f0e; font-weight: 600;'>✅ Processing Complete</p>", unsafe_allow_html=True)
+            st.progress(1.0)
         with text_col:
             st.metric("Total Steps", len(self.steps))
         
@@ -79,7 +96,8 @@ class StepTracker:
         for idx, step in enumerate(self.steps):
             # Step progress indicator
             step_progress = (idx + 1) / len(self.steps)
-            st.markdown(f"**Progress: Step {idx + 1} of {len(self.steps)}**")
+            progress_text = f"Step {idx + 1} of {len(self.steps)}"
+            st.markdown(f"<p style='color: #1f77b4; font-weight: 600;'>📍 {progress_text}</p>", unsafe_allow_html=True)
             
             self.display_step(step)
 
@@ -90,7 +108,7 @@ class DetailedPipeline:
     @staticmethod
     def display_configuration(title, config_dict):
         """Display configuration section"""
-        st.markdown(f"#### 📋 {title}")
+        st.markdown(f"<p style='color: #ff7f0e; font-weight: 600; font-size: 16px;'>📋 {title}</p>", unsafe_allow_html=True)
         config_df = pd.DataFrame([
             {"Setting": k, "Value": str(v)[:100]} 
             for k, v in config_dict.items()
@@ -100,13 +118,14 @@ class DetailedPipeline:
     @staticmethod
     def display_fuzzy_membership(title, fuzzy_dict):
         """Display fuzzy membership visualization"""
-        st.markdown(f"#### 🎯 {title}")
+        st.markdown(f"<p style='color: #ff7f0e; font-weight: 600; font-size: 16px;'>🎯 {title}</p>", unsafe_allow_html=True)
         membership_data = []
         for key, value in fuzzy_dict.items():
+            bar_length = int(value * 25)
             membership_data.append({
-                "Category": key,
-                "Membership": f"{value:.4f}",
-                "Visual": "▓" * int(value * 20) + "░" * (20 - int(value * 20))
+                "Category": f"<span style='color: #1f77b4;'>{key}</span>",
+                "Value": f"{value:.4f}",
+                "Visual": "▓" * bar_length + "░" * (25 - bar_length)
             })
         df = pd.DataFrame(membership_data)
         st.dataframe(df, use_container_width=True, hide_index=True)
@@ -114,15 +133,15 @@ class DetailedPipeline:
     @staticmethod
     def display_ranges(title, ranges_dict):
         """Display range configuration"""
-        st.markdown(f"#### 📊 {title}")
+        st.markdown(f"<p style='color: #ff7f0e; font-weight: 600; font-size: 16px;'>📊 {title}</p>", unsafe_allow_html=True)
         range_data = []
         for key, (min_val, max_val) in ranges_dict.items():
             min_display = f"{min_val:.4f}" if not np.isinf(min_val) else "-∞"
             max_display = f"{max_val:.4f}" if not np.isinf(max_val) else "+∞"
             range_data.append({
-                "Category": key,
-                "Min": min_display,
-                "Max": max_display,
+                "Category": f"<span style='color: #1f77b4;'>{key}</span>",
+                "Min": f"<span style='color: #2ca02c;'>{min_display}</span>",
+                "Max": f"<span style='color: #d62728;'>{max_display}</span>",
                 "Range": f"[{min_display}, {max_display}]"
             })
         df = pd.DataFrame(range_data)
@@ -131,17 +150,18 @@ class DetailedPipeline:
     @staticmethod
     def display_rules(title, rules_list):
         """Display inference rules with results"""
-        st.markdown(f"#### 🔗 {title}")
+        st.markdown(f"<p style='color: #ff7f0e; font-weight: 600; font-size: 16px;'>🔗 {title}</p>", unsafe_allow_html=True)
         rules_df = pd.DataFrame(rules_list)
         st.dataframe(rules_df, use_container_width=True, hide_index=True)
     
     @staticmethod
     def display_raw_values(title, values_dict):
         """Display raw input values"""
-        st.markdown(f"#### 📈 {title}")
-        col1, col2 = st.columns(len(values_dict))
+        st.markdown(f"<p style='color: #ff7f0e; font-weight: 600; font-size: 16px;'>📈 {title}</p>", unsafe_allow_html=True)
+        col_count = len(values_dict)
+        cols = st.columns(col_count)
         for idx, (key, val) in enumerate(values_dict.items()):
-            with st.columns(len(values_dict))[idx]:
+            with cols[idx]:
                 if isinstance(val, (int, float)):
                     st.metric(key, f"{val:.4f}")
                 else:
@@ -398,8 +418,10 @@ class AssetLiquidityFuzzy(FuzzyBase):
 
 
 # ==================== STREAMLIT APP ====================
-st.set_page_config(page_title="Fuzzy Logic Stock Analyzer", layout="wide")
-st.title("📊 Fuzzy Logic Stock Analyzer")
+st.set_page_config(page_title="Fuzzy Logic Stock Analyzer", layout="wide", initial_sidebar_state="expanded")
+
+# Display main header
+st.markdown(render_main_header("📊 Fuzzy Logic Stock Analyzer", "Advanced Financial Analysis System"), unsafe_allow_html=True)
 
 # Predefined Stock IDs
 STOCK_ID_LIST = [
@@ -411,12 +433,16 @@ STOCK_ID_LIST = [
 ]
 
 # Sidebar navigation
-st.sidebar.title("Menu")
-app_mode = st.sidebar.radio("Select Function:", ["ROA Bottoming Trend Fuzzy", "Asset Liquidity Fuzzy"])
+st.sidebar.title("🎛️ Menu")
+st.sidebar.markdown("---")
+app_mode = st.sidebar.radio("Select Function:", 
+    ["ROA Bottoming Trend Fuzzy", "Asset Liquidity Fuzzy"],
+    help="Choose which fuzzy analysis to perform"
+)
 
 # ==================== ROA BOTTOMING TREND TAB ====================
 if app_mode == "ROA Bottoming Trend Fuzzy":
-    st.header("🔍 ROA Bottoming Trend Fuzzy System")
+    st.markdown(render_section_header("🔍 ROA Bottoming Trend Fuzzy System"), unsafe_allow_html=True)
     
     # Input Stock ID with dropdown
     st.subheader("📊 Input Stock ID")
@@ -455,7 +481,7 @@ if app_mode == "ROA Bottoming Trend Fuzzy":
             key="output_levels_roa"
         )
         
-        st.markdown("### ROA Fuzzy Membership Ranges")
+        st.markdown("<p style='color: #ff7f0e; font-weight: 600; font-size: 16px;'>ROA Fuzzy Membership Ranges</p>", unsafe_allow_html=True)
         col_roa_1, col_roa_2, col_roa_3 = st.columns(3)
         with col_roa_1:
             roa_low_upper = st.number_input("ROA LOW - Upper bound:", value=0.05, step=0.01, key="roa_low")
@@ -521,10 +547,10 @@ if app_mode == "ROA Bottoming Trend Fuzzy":
             
             col1, col2 = st.columns(2)
             with col1:
-                st.markdown("**ROA Membership Ranges:**")
+                st.markdown("<p style='color: #1f77b4; font-weight: 600; font-size: 14px;'>📊 ROA Membership Ranges:</p>", unsafe_allow_html=True)
                 pipeline.display_ranges("ROA Categories", MAP_ROA)
             with col2:
-                st.markdown("**Trend Membership Ranges:**")
+                st.markdown("<p style='color: #1f77b4; font-weight: 600; font-size: 14px;'>📊 Trend Membership Ranges:</p>", unsafe_allow_html=True)
                 pipeline.display_ranges("Trend Categories", MAP_TREND)
             
             tracker.add_step(1, "Membership Function Configuration", "Define fuzzy membership ranges",
@@ -676,7 +702,7 @@ if app_mode == "ROA Bottoming Trend Fuzzy":
 
 # ==================== ASSET LIQUIDITY TAB ====================
 else:  # Asset Liquidity Fuzzy
-    st.header("💧 Asset Liquidity Fuzzy System")
+    st.markdown(render_section_header("💧 Asset Liquidity Fuzzy System"), unsafe_allow_html=True)
     
     # Input Stock ID with dropdown
     st.subheader("📊 Input Stock ID")
@@ -907,25 +933,18 @@ else:  # Asset Liquidity Fuzzy
             with col4:
                 st.metric("Target", level_label[1])
             
-            st.success("✅ Analysis Complete!")
+            st.markdown(render_success_box("Analysis Complete!"), unsafe_allow_html=True)
             
             tracker.add_step(6, "Final Result", "Assessment completed",
                            {"Level": level_label[0], "Score": f"{final_score:.2f}"})
             
         except json.JSONDecodeError as e:
-            st.error(f"❌ JSON Error: {e}")
+            st.markdown(render_error_box(f"JSON Error: {e}"), unsafe_allow_html=True)
         except Exception as e:
-            st.error(f"❌ Error: {str(e)}")
-            
-            tracker.add_step(9, "Analysis Complete", "All processing steps completed successfully",
-                           {"Final Score": f"{final_score:.2f}", "Level": level_label[0]})
-            
-        except json.JSONDecodeError as e:
-            st.error(f"❌ JSON Parsing Error: {e}")
-        except Exception as e:
-            st.error(f"❌ Error: {str(e)}")
+            st.markdown(render_error_box(f"Error: {str(e)}"), unsafe_allow_html=True)
 
 
 
 st.sidebar.markdown("---")
-st.sidebar.info("💡 Stock Analysis Application using Fuzzy Logic")
+st.sidebar.markdown("### 💡 About")
+st.sidebar.info("Advanced Stock Analysis Application using Fuzzy Logic Systems for intelligent financial decision making.")
