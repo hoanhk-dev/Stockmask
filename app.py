@@ -123,12 +123,29 @@ class DetailedPipeline:
         for key, value in fuzzy_dict.items():
             bar_length = int(value * 25)
             membership_data.append({
-                "Category": f"<span style='color: #1f77b4;'>{key}</span>",
+                "Category": key,
                 "Value": f"{value:.4f}",
                 "Visual": "▓" * bar_length + "░" * (25 - bar_length)
             })
         df = pd.DataFrame(membership_data)
-        st.dataframe(df, use_container_width=True, hide_index=True)
+        
+        # Use HTML table for proper styling instead of st.dataframe
+        html_table = "<table style='width:100%; border-collapse: collapse;'>"
+        html_table += "<tr style='border-bottom: 2px solid #ff7f0e;'>"
+        html_table += "<th style='text-align: left; padding: 8px; color: #1f77b4;'>Category</th>"
+        html_table += "<th style='text-align: center; padding: 8px; color: #1f77b4;'>Value</th>"
+        html_table += "<th style='text-align: left; padding: 8px; color: #1f77b4;'>Visual</th>"
+        html_table += "</tr>"
+        
+        for _, row in df.iterrows():
+            html_table += f"<tr style='border-bottom: 1px solid #e0e0e0;'>"
+            html_table += f"<td style='padding: 8px; color: #1f77b4; font-weight: 600;'>{row['Category']}</td>"
+            html_table += f"<td style='padding: 8px; text-align: center; color: #2ca02c;'>{row['Value']}</td>"
+            html_table += f"<td style='padding: 8px; color: #d62728; font-family: monospace;'>{row['Visual']}</td>"
+            html_table += "</tr>"
+        
+        html_table += "</table>"
+        st.markdown(html_table, unsafe_allow_html=True)
     
     @staticmethod
     def display_ranges(title, ranges_dict):
@@ -139,13 +156,32 @@ class DetailedPipeline:
             min_display = f"{min_val:.4f}" if not np.isinf(min_val) else "-∞"
             max_display = f"{max_val:.4f}" if not np.isinf(max_val) else "+∞"
             range_data.append({
-                "Category": f"<span style='color: #1f77b4;'>{key}</span>",
-                "Min": f"<span style='color: #2ca02c;'>{min_display}</span>",
-                "Max": f"<span style='color: #d62728;'>{max_display}</span>",
+                "Category": key,
+                "Min": min_display,
+                "Max": max_display,
                 "Range": f"[{min_display}, {max_display}]"
             })
         df = pd.DataFrame(range_data)
-        st.dataframe(df, use_container_width=True, hide_index=True)
+        
+        # Use HTML table for proper styling instead of st.dataframe
+        html_table = "<table style='width:100%; border-collapse: collapse;'>"
+        html_table += "<tr style='border-bottom: 2px solid #ff7f0e;'>"
+        html_table += "<th style='text-align: left; padding: 8px; color: #1f77b4;'>Category</th>"
+        html_table += "<th style='text-align: left; padding: 8px; color: #2ca02c;'>Min</th>"
+        html_table += "<th style='text-align: left; padding: 8px; color: #d62728;'>Max</th>"
+        html_table += "<th style='text-align: left; padding: 8px; color: #1f77b4;'>Range</th>"
+        html_table += "</tr>"
+        
+        for _, row in df.iterrows():
+            html_table += f"<tr style='border-bottom: 1px solid #e0e0e0;'>"
+            html_table += f"<td style='padding: 8px; color: #1f77b4;'>{row['Category']}</td>"
+            html_table += f"<td style='padding: 8px; color: #2ca02c;'>{row['Min']}</td>"
+            html_table += f"<td style='padding: 8px; color: #d62728;'>{row['Max']}</td>"
+            html_table += f"<td style='padding: 8px; color: #1f77b4;'>{row['Range']}</td>"
+            html_table += "</tr>"
+        
+        html_table += "</table>"
+        st.markdown(html_table, unsafe_allow_html=True)
     
     @staticmethod
     def display_rules(title, rules_list):
@@ -582,14 +618,11 @@ if app_mode == "ROA Bottoming Trend Fuzzy":
             slope = fuzzy_system.slope_of_list(roa_data)
             roa_final = roa_data[-1]
             
-            col1, col2, col3 = st.columns(3)
+            col1, col2 = st.columns(2)
             with col1:
                 st.metric("Latest ROA", f"{roa_final:.4f}")
             with col2:
                 st.metric("Slope", f"{slope:.6f}")
-            with col3:
-                trend_dir = "📈 Improving" if slope > 0 else "📉 Declining"
-                st.metric("Trend", trend_dir)
             
             tracker.add_step(2, "Calculate & Fetch Data", f"Retrieved data and calculated trend",
                            {"Years": len(roa_data), "Latest ROA": f"{roa_final:.4f}", "Slope": f"{slope:.6f}"})
@@ -778,6 +811,8 @@ else:  # Asset Liquidity Fuzzy
             height=300,
             key="rule_table_asset"
         )
+    
+    st.divider()
     
     # ========== Calculate Button ==========
     if st.button("🚀 Calculate Asset Liquidity", key="liquidity_button_main", use_container_width=True):
