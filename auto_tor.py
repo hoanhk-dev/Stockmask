@@ -37,7 +37,7 @@ class SearchESGScoreBySearXNG:
 # 2. Ollama Title Selector
 # ==============================
 class OllamaTitleSelector:
-    def __init__(self, model_name="qwen2.5:1.5b"):
+    def __init__(self, model_name="qwen2.5:3b"):
         self.model_name = model_name
 
     def safe_json_loads(self, raw: str):
@@ -279,54 +279,61 @@ if __name__ == "__main__":
     selector = OllamaTitleSelector()
     csv_filename = "esg_results.csv"
     
-    # Xóa file CSV cũ nếu tồn tại
-    if Path(csv_filename).exists():
-        Path(csv_filename).unlink()
+    # # Xóa file CSV cũ nếu tồn tại
+    # if Path(csv_filename).exists():
+    #     Path(csv_filename).unlink()
 
-    for stt, name in enumerate(companies, 1):
-        results = searchESGScore.search_esg_score(name)
-        if not results.results or results.results[0].content == 'Sorry!':
-            print(f"❌ No search results found for company '{name}'!")
-            print("SearXNG Error")
-            # Lưu dòng lỗi vào CSV ngay
-            row_data = {
-                'STT': stt,
-                'Company Name': name,
-                'URL List': '',
-                'Titles List': '',
-                'Best Title': '',
-                'Best URL': '',
-                'Result ESG': 'No search results found'
-            }
-            save_to_csv(row_data, csv_filename, is_first=(stt == 1))
-            continue
-
-        TITLES = {i: r.title for i, r in enumerate(results.results)}
-        titles_list = [clean_title(t) for t in TITLES.values()]
-        url_list = [str(r.url) for r in results.results]
-
-        best = selector.title_selector(
-            company_name=name,
-            titles_list=titles_list
-        )
-
-        best_url = str(results.results[best['index']].url)
-        best_title = best['title']
-
-        print(f"\n🔗 URL for company '{name}':")
-        print(best_url)
-    
-        # Chạy main để lấy kết quả ESG
-        esg_result = asyncio.run(main(best_url))
-        
-        # Lưu dữ liệu vào CSV ngay
+    # for stt, name in enumerate(companies, 1):
+    key = 5
+    name = companies[key]
+    stt = key + 1
+    results = searchESGScore.search_esg_score(name)
+    if not results.results or results.results[0].content == 'Sorry!':
+        print(f"❌ No search results found for company '{name}'!")
+        print("SearXNG Error")
+        # Lưu dòng lỗi vào CSV ngay
         row_data = {
             'STT': stt,
             'Company Name': name,
-            'URL List': '|'.join(url_list),  # Nối các URL bằng |
-            'Titles List': '|'.join(titles_list),  # Nối các title bằng |
-            'Best Title': best_title,
-            'Best URL': best_url,
-            'Result ESG': esg_result
+            'URL List': '',
+            'Titles List': '',
+            'Best Title': '',
+            'Best URL': '',
+            'Result ESG': 'No search results found'
         }
         save_to_csv(row_data, csv_filename, is_first=(stt == 1))
+        # continue
+
+    TITLES = {i: r.title for i, r in enumerate(results.results)}
+    # titles_list = [clean_title(t) for t in TITLES.values()]
+    titles_list = [t for t in TITLES.values()]
+
+    url_list = [str(r.url) for r in results.results]
+
+    best = selector.title_selector(
+        company_name=name,
+        titles_list=titles_list
+    )
+
+    best_url = str(results.results[best['index']].url)
+    best_title = best['title']
+    # best_title = titles_list[0]
+    # best_url = str(url_list[0])
+
+    print(f"\n🔗 URL for company '{name}':")
+    print(best_url)
+
+    # Chạy main để lấy kết quả ESG
+    esg_result = asyncio.run(main(best_url))
+    
+    # Lưu dữ liệu vào CSV ngay
+    row_data = {
+        'STT': stt,
+        'Company Name': name,
+        'URL List': '|'.join(url_list),  # Nối các URL bằng |
+        'Titles List': '|'.join(titles_list),  # Nối các title bằng |
+        'Best Title': best_title,
+        'Best URL': best_url,
+        'Result ESG': esg_result
+    }
+    save_to_csv(row_data, csv_filename, is_first=(stt == 1))
